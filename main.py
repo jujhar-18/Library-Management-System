@@ -75,6 +75,11 @@ def inventory():
                 for column in columns:
                     temp_book_value[column] = input(f"Inset Value for {column}: ")
                 book = Book(Mysql_con, temp_book_value["bookid"], temp_book_value["book_sno"], temp_book_value["book_name"], temp_book_value["book_quantity"], temp_book_value["book_price"], temp_book_value["book_theme"], temp_book_value["book_author"])
+                book.insertBook()
+
+                cur.execute("select * from inventory")
+                for row in cur:
+                    print(row)
 
 
     # con=m.connect(host='localhost', user='root', password='20062006', database= 'Library')
