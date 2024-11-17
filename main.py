@@ -237,18 +237,19 @@ def inventory(con):
         print("2. Add Book")
         print("3. Delete Book")
         print("4. Update Book")
+        print("5. Go Back")
         user_opt = int(input("Option: "))
-        if (user_opt == 1):
+        if user_opt == 1:
             ShowBooksFromInventory(cursor)
                 
-        elif (user_opt == 2):
+        elif user_opt == 2:
             AddBookToInventory(con, cursor)
                 
-        elif (user_opt == 3):
+        elif user_opt == 3:
             while True:
                 deleteBookFromInventory(con)
                 run_again = ""
-                while (run_again != "n"):
+                while run_again != "n":
                     run_again = input("\nDo you want to delete more books?(y/n): ").strip().lower()
                     if run_again == "y":
                         deleteBookFromInventory(con)
@@ -258,8 +259,10 @@ def inventory(con):
                         pass
                     else:
                         print("(!) Invalid Choice (!)\n")
-        elif (user_opt == 4):
+        elif user_opt == 4:
             UpdateRecordInInventory(con, cursor)
+        elif user_opt == 5:
+            break
         else:
             print("\n(!) Invalid Option (!)\n")
 
