@@ -263,47 +263,150 @@ def inventory(con):
         else:
             print("\n(!) Invalid Option (!)\n")
 
+def issueBookMenu():
+    while True:
+        print("\n(!) Issue Book Menu (!)\n")
+        print("1. Issue a Book")
+        print("2. View Issued Books")
+        print("3. Delete Issued Book Record")
+        print("4. Update Issued Book Record")
+        print("5. Go Back")
+        user_opt = input("Choose an option: ").strip()
+
+        if user_opt == "1":
+            issueBook()
+        elif user_opt == "2":
+            viewIssuedBooks()
+        elif user_opt == "3":
+            deleteIssuedBook()
+        elif user_opt == "4":
+            updateIssuedBook()
+        elif user_opt == "5":
+            break
+        else:
+            print("(!) Invalid Choice (!)\n")
+
 def issueBook():
-    print("\n(!) Issue Book (!)\n")
-    # Step 1: Get the book ID
-    book_id = input("Enter the 'bookid' of the book you want to issue (e.g., 00001): ").strip()
-    
-    # Step 2: Check if the book exists in the inventory
-    cur = con.cursor()
-    cur.execute(f"SELECT * FROM inventory WHERE bookid = '{book_id}'")
-    book = cur.fetchone()
-    
-    if not book:
-        print("\n(!) No such book found with that 'bookid'. Please try again. (!)\n")
-        return
-    
-    # Step 3: Check if the book has available quantity
-    available_quantity = book[3]  # book_quantity is the 4th column (index 3)
-    
-    if available_quantity <= 0:
-        print("\n(!) Sorry, this book is currently out of stock. Please try again later. (!)\n")
-        return
-    
-    # Step 4: Record the transaction (for simplicity, just a print for now)
-    # You could extend this by adding a table like 'issued_books' where you log who issued the book, etc.
-    
-    print(f"\n(!) Issuing Book: {book[2]} ({book_id}) - Quantity: {available_quantity} (!)\n")
-    
-    # Update the book quantity in the inventory (decrease by 1)
-    new_quantity = available_quantity - 1
-    cur.execute(f"UPDATE inventory SET book_quantity = {new_quantity} WHERE bookid = '{book_id}'")
-    con.commit()
-    
-    print(f"\n(!) Book '{book[2]}' has been issued successfully. Remaining Quantity: {new_quantity} (!)\n")
-    
-    # Step 5: Option to issue more books
-    run_again = input("\nDo you want to issue another book? (y/n): ").strip().lower()
-    if run_again == "y":
-        issueBook()  # Recursively call to issue another book
-    else:
-        print("\n(!) Going Back to Main Menu... (!)\n")
+    con = checkMySQL()
+    if not con:
+        print("(!) No Connection! (!)")
         return
 
+    cursor = con.cursor()
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS issues (
+                issue_id VARCHAR(10) PRIMARY KEY,
+                bookid VARCHAR(5),
+                enrollment_no VARCHAR(15),
+                issue_date DATE,
+                return_date DATE,
+                FOREIGN KEY (bookid) REFERENCES inventory(bookid)
+            )
+        """)
+        con.commit()
+    except Exception as e:
+        print("(!) Error creating issues table (!)\nError: ", e)
+        return
+
+    print("(!) Issue Book (!)\n")
+    issue_id = input("Enter Issue ID: ").strip()
+    bookid = input("Enter Book ID: ").strip()
+    enrollment_no = input("Enter Enrollment No: ").strip()
+    issue_date = input("Enter Issue Date (YYYY-MM-DD): ").strip()
+    return_date = input("Enter Return Date (YYYY-MM-DD): ").strip()
+
+    try:
+        cursor.execute(f"""
+            INSERT INTO issues (issue_id, bookid, enrollment_no, issue_date, return_date)
+            VALUES ('{issue_id}', '{bookid}', '{enrollment_no}', '{issue_date}', '{return_date}')
+        """)
+        con.commit()
+        print("(!) Book issued successfully (!)\n")
+    except Exception as e:
+        print("(!) Error issuing book (!)\nError: ", e)
+
+def viewIssuedBooks():
+    con = checkMySQL()
+    if not con:
+        print("(!) No Connection! (!)")
+        return
+
+    cursor = con.cursor()
+    try:
+        cursor.execute("SELECT * FROM issues")
+        records = cursor.fetchall()
+        print("\n(!) Issued Books: (!)\n")
+        for record in records:
+            print(record)
+    except Exception as e:
+        print("(!) Error fetching issued books (!)\nError: ", e)
+
+def deleteIssuedBook():
+    con = checkMySQL()
+    if not con:
+        print("(!) No Connection! (!)")
+        return
+
+    cursor = con.cursor()
+    issue_id = input("Enter Issue ID to delete: ").strip()
+    try:
+        cursor.execute(f"DELETE FROM issues WHERE issue_id = '{issue_id}'")
+        con.commit()
+        print("(!) Issued book record deleted successfully (!)\n")
+    except Exception as e:
+        print("(!) Error deleting issued book record (!)\nError: ", e)
+
+def updateIssuedBook():
+    con = checkMySQL()
+    if not con:
+        print("(!) No Connection! (!)")
+        return
+
+    cursor = con.cursor()
+    issue_id = input("Enter Issue ID to update: ").strip()
+    try:
+        cursor.execute(f"SELECT * FROM issues WHERE issue_id = '{issue_id}'")
+        record = cursor.fetchone()
+        if not record:
+            print("(!) No record found with the given Issue ID (!)\n")
+            return
+
+        print("Current Record: ", record)
+        bookid = input("Enter new Book ID (leave blank to keep current): ").strip() or record[1]
+        enrollment_no = input("Enter new Enrollment No (leave blank to keep current): ").strip() or record[2]
+        issue_date = input("Enter new Issue Date (YYYY-MM-DD, leave blank to keep current): ").strip() or record[3]
+        return_date = input("Enter new Return Date (YYYY-MM-DD, leave blank to keep current): ").strip() or record[4]
+
+        cursor.execute(f"""
+            UPDATE issues
+            SET bookid = '{bookid}', enrollment_no = '{enrollment_no}', issue_date = '{issue_date}', return_date = '{return_date}'
+            WHERE issue_id = '{issue_id}'
+        """)
+        con.commit()
+        print("(!) Issued book record updated successfully (!)\n")
+    except Exception as e:
+        print("(!) Error updating issued book record (!)\nError: ", e)
+
+def library_stats():
+    con = checkMySQL()
+    if not con:
+        print("(!) No Connection! (!)")
+        return
+
+    cursor = con.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) FROM inventory")
+        total_books = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM issues")
+        total_issued_books = cursor.fetchone()[0]
+
+        print("\n(!) Library Stats (!)\n")
+        print(f"Total Books: {total_books}")
+        print(f"Total Issued Books: {total_issued_books}")
+    except Exception as e:
+        print("(!) Error fetching library stats (!)\nError: ", e)
 
 while True:
     con = checkMySQL()
