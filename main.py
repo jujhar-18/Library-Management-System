@@ -79,21 +79,19 @@ def ShowBooksFromInventory(cur):
                 print("\n(!) Records in Database: (!) \n")
                 for row in records:
                     print(row)
-                if (len(records) > 10):
+                if (len(records) == 10):
                     wantMore = ""
                     while (wantMore != "n"):
                         wantMore = input("\n(!) Do you want to see 10 more records?(y/n): ").strip().lower()
                         if (wantMore == "y"):
                             start = stop
                             stop += 10
-                            break
                         elif (wantMore == "n"):
                             pass
                         else:
                             print("(!) Enter Valid Option (!)")
                 else:
                     print(f"\n(!) Going Back... Only {len(records)} Records Exists! (!)\n")
-                    ShowBooksFromInventory(cur)
                     break
             break
         elif (user_opt == 2):
@@ -149,7 +147,7 @@ def AddBookToInventory(con, cur):
         run_again = input("\nDo you want to add more books?(y/n): ").strip().lower()
         if run_again == "y":
             AddBookToInventory(con, cur)
-            break
+            return
         elif run_again == "n":
             break
         else:
