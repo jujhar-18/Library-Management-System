@@ -425,7 +425,7 @@ while True:
         if (user_value == "inventory" or user_value == "1"):
             inventory(con)
         elif (user_value == "issue book" or user_value == "2"):
-            issueBook()
+            issueBookMenu()
         elif (user_value == "stats" or user_value == "3"):
             library_stats()
         elif (user_value == "exit" or user_value == "4"):
